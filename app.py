@@ -8,6 +8,38 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.database import get_locations, get_forecasts
 
+def load_dotenv(dotenv_path=".env"):
+    if os.path.exists(dotenv_path):
+        try:
+            with open(dotenv_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, val = line.split("=", 1)
+                        os.environ[key.strip()] = val.strip()
+        except Exception as e:
+            pass
+
+# Load Windy API Key from .env
+load_dotenv()
+WINDY_API_KEY = os.environ.get("WINDY_API_KEY")
+
+# Latitude and Longitude mapping for Yilan County districts
+LOCATION_COORDS = {
+    "宜蘭縣 宜蘭市": (24.753707, 121.745083),
+    "宜蘭縣 羅東鎮": (24.678673, 121.758763),
+    "宜蘭縣 蘇澳鎮": (24.595673, 121.844374),
+    "宜蘭縣 頭城鎮": (24.856984, 121.821915),
+    "宜蘭縣 礁溪鄉": (24.819794, 121.766324),
+    "宜蘭縣 壯圍鄉": (24.743132, 121.810574),
+    "宜蘭縣 員山鄉": (24.741005, 121.688177),
+    "宜蘭縣 冬山鄉": (24.634125, 121.792474),
+    "宜蘭縣 五結鄉": (24.684126, 121.802474),
+    "宜蘭縣 三星鄉": (24.667086, 121.650893),
+    "宜蘭縣 大同鄉": (24.676646, 121.606713),
+    "宜蘭縣 南澳鄉": (24.460834, 121.800043)
+}
+
 # Page Configuration
 st.set_page_config(
     page_title="CWA Weather Forecast Dashboard",
@@ -118,7 +150,7 @@ st.sidebar.markdown("<h2 style='color:#38BDF8; font-weight:800; text-align:cente
 st.sidebar.markdown("<p style='color:#64748B; font-size:0.85rem; text-align:center; margin-bottom:2rem;'>Taiwan CWA Weather Predictor</p>", unsafe_allow_html=True)
 
 # Page Navigation selector
-pages = ["🏠 Home Overview", "📋 Detailed Forecasts", "📈 Plotly Charts"]
+pages = ["🏠 Home Overview", "📋 Detailed Forecasts", "📈 Plotly Charts", "🗺️ Weather Map"]
 selected_page = st.sidebar.radio("Navigation Page", pages)
 
 st.sidebar.markdown("---")
@@ -254,3 +286,73 @@ elif selected_page == "📈 Plotly Charts":
             st.plotly_chart(fig_bar, use_container_width=True)
         else:
             st.info("No rain probability data available for this location to render the chart.")
+
+# ----------------- PAGE 4: WEATHER MAP -----------------
+elif selected_page == "🗺️ Weather Map":
+    st.markdown(f"<h1 class='dashboard-title'>Windy Weather Map: {selected_loc}</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94A3B8; margin-bottom:2rem;'>Interactive Windy Map synchronized with the selected CWA station location.</p>", unsafe_allow_html=True)
+    
+    # Check if WINDY_API_KEY is found (logged as per requirements)
+    if WINDY_API_KEY:
+        st.sidebar.success("Windy API Key loaded from .env")
+    else:
+        st.sidebar.warning("Windy API Key not set in .env. Using free visualization layer.")
+
+    # Layer selector
+    map_layer = st.selectbox("Select Map Overlay Layer", ["Temperature", "Wind", "Rain", "Cloud"])
+    
+    layer_mapping = {
+        "Temperature": "temp",
+        "Wind": "wind",
+        "Rain": "rain",
+        "Cloud": "clouds"
+    }
+    
+    windy_layer = layer_mapping[map_layer]
+    
+    # Get coordinates of selected location, fallback to Yilan County center
+    coords = LOCATION_COORDS.get(selected_loc, (24.6766, 121.7588))
+    lat, lon = coords
+    
+    # Windy iframe embed URL centered on selection
+    windy_url = f"https://embed.windy.com/embed2.html?lat={lat}&lon={lon}&zoom=9&level=surface&overlay={windy_layer}&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=default&metricTemp=default"
+    
+    # Create side by side columns: map and CWA current stats
+    col_map, col_details = st.columns([5, 2])
+    
+    with col_map:
+        st.markdown(f"""
+        <div style="border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+            <iframe src="{windy_url}" width="100%" height="580" frameborder="0"></iframe>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_details:
+        st.markdown("<h4 style='color:#38BDF8;'>Synchronized CWA Data</h4>", unsafe_allow_html=True)
+        if not df.empty:
+            current_rec = df.iloc[0]
+            curr_temp = current_rec['temperature']
+            curr_hum = current_rec['humidity']
+            curr_rain = current_rec['rain_probability']
+            curr_time = current_rec['forecast_time'].strftime("%Y-%m-%d %H:%M:%S")
+            
+            st.markdown(f"""
+            <div style="background: rgba(30, 41, 59, 0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px;">
+                <p style='color:#94A3B8; font-size:0.8rem; margin:0;'>Forecast Time</p>
+                <p style='font-size:1.1rem; font-weight:700; margin:0; color:#FFFFFF;'>{curr_time}</p>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px;">
+                <p style='color:#94A3B8; font-size:0.8rem; margin:0;'>CWA Temperature</p>
+                <p style='font-size:1.5rem; font-weight:800; margin:0; color:#F43F5E;'>{curr_temp:.1f}°C</p>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px;">
+                <p style='color:#94A3B8; font-size:0.8rem; margin:0;'>CWA Relative Humidity</p>
+                <p style='font-size:1.5rem; font-weight:800; margin:0; color:#38BDF8;'>{curr_hum:.0f}%</p>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.3); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <p style='color:#94A3B8; font-size:0.8rem; margin:0;'>CWA Rain Probability</p>
+                <p style='font-size:1.5rem; font-weight:800; margin:0; color:#3B82F6;'>{f"{curr_rain:.0f}%" if pd.notnull(curr_rain) else "-"}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.warning("No aligned CWA data found.")
