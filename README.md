@@ -20,7 +20,9 @@ cwa-weather-prediction-dashboard/
 │
 ├── src/                      # Source code directory for core logic
 │   ├── cwa_client.py         # CWA Weather Data API Client
-│   └── database.py           # SQLite Database schemas and helpers
+│   ├── database.py           # SQLite Database schemas and helpers
+│   ├── train.py              # ML training service using RandomForestRegressor
+│   └── predict.py            # ML inference service
 │
 ├── models/                   # Directory to store trained ML models (.pkl)
 │   └── .gitkeep

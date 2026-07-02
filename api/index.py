@@ -6,6 +6,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.cwa_client import CWAClient
 from src.database import save_forecasts
+from src.predict import predict_temperatures
 
 app = FastAPI(
     title="CWA Weather Prediction API",
@@ -48,3 +49,14 @@ def update_weather(dataset_id: str = Query("F-D0047-001", description="CWA Datas
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update weather: {e}")
+
+@app.get("/api/predict")
+def get_predictions():
+    """
+    Run model predictions and return the forecasts alongside performance metrics.
+    """
+    try:
+        results = predict_temperatures()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to run predictions: {e}")
