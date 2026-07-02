@@ -38,7 +38,8 @@ cwa-weather-prediction-dashboard/
 ├── .gitignore                # Git exclusion specifications
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Python dependency specifications
-└── vercel.json               # Vercel deployment rewrite rules
+├── vercel.json               # Vercel deployment rewrite rules
+└── app.py                    # Streamlit Dashboard application
 ```
 
 ## Getting Started
