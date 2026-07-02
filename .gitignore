@@ -1,6 +1,4 @@
 .env
-data/weather.db
-models/*.pkl
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
