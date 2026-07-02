@@ -17,8 +17,7 @@ app = FastAPI(
 @app.get("/")
 def read_root():
     return {
-        "status": "online",
-        "message": "Welcome to the CWA Weather Prediction API skeleton. Use /docs to view the API documentation."
+        "status": "ok"
     }
 
 @app.get("/api/weather")
