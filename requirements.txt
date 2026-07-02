@@ -1,9 +1,6 @@
 fastapi
 uvicorn
-pandas
-numpy
-scikit-learn
 plotly
-statsmodels
+pandas
 requests
-streamlit
+scikit-learn
