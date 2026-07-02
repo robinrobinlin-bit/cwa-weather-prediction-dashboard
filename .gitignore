@@ -1,0 +1,10 @@
+.env
+data/weather.db
+models/*.pkl
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+weatherdb
+weatherdb.sqlite
+weather_data.csv
+weather_data.xlsx
