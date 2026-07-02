@@ -84,5 +84,37 @@ def save_forecasts(rows):
     logger.info(f"Saved {len(rows)} forecast records into the database.")
     return len(rows)
 
+def get_locations():
+    """
+    Get a sorted list of unique locations stored in the database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT location FROM weather_forecast ORDER BY location ASC')
+    locations = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return locations
+
+def get_forecasts(location=None):
+    """
+    Retrieve forecast records, optionally filtered by location.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if location:
+        cursor.execute('''
+            SELECT * FROM weather_forecast 
+            WHERE location = ? 
+            ORDER BY forecast_time ASC
+        ''', (location,))
+    else:
+        cursor.execute('''
+            SELECT * FROM weather_forecast 
+            ORDER BY location, forecast_time ASC
+        ''')
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows
+
 if __name__ == '__main__':
     init_db()
